@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ImportaGxP (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "ImportaGxP (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
