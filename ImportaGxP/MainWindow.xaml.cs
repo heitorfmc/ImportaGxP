@@ -13,8 +13,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Storage.Pickers;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -28,10 +30,13 @@ namespace ImportaGxP
     {
         string CaminhoSIAFWor;
         string CaminhoSIAFWde;
+        string CaminhoAlt;
         List<string> QueryUpdate;
         public MainWindow()
         {
             this.InitializeComponent();
+
+            Title = "Importa Grupos x Programas";
 
             foreach (var drive in DriveInfo.GetDrives())
             {
@@ -39,6 +44,23 @@ namespace ImportaGxP
                     ListaPastas(drive.Name);
             }
             QueryUpdate = new();
+        }
+
+        private async Task AbrirArquivo()
+        {
+            // Create the file picker
+            var filePicker = new FileOpenPicker();
+
+            // Get the current window's HWND by passing in the Window object
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+
+            // Associate the HWND with the file picker
+            WinRT.Interop.InitializeWithWindow.Initialize(filePicker, hwnd);
+
+            // Use file picker like normal!
+            filePicker.FileTypeFilter.Add(".fdb");
+            var file = await filePicker.PickSingleFileAsync();
+            if (file != null) CaminhoAlt = file.Path;
         }
 
         private void ListaPastas(string drive)
@@ -51,10 +73,75 @@ namespace ImportaGxP
                 ComboSiafwOrig.Items.Add(d.FullName + "\\SIAFW.FDB");
                 ComboSiafwDest.Items.Add(d.FullName + "\\SIAFW.FDB");
             }
+            ComboSiafwOrig.Items.Add("Abrir arquivo...");
+            ComboSiafwDest.Items.Add("Abrir arquivo...");
+        }
+
+        private async void ComboSiafwOr_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if(ComboSiafwOrig.SelectedItem.ToString() == "Abrir arquivo...")
+            {
+                CaminhoAlt = null;
+                await AbrirArquivo();
+                if (CaminhoAlt != null)
+                {
+                    ComboSiafwOrig.Items.Insert(ComboSiafwOrig.Items.Count - 1, CaminhoAlt);
+                    ComboSiafwOrig.SelectedIndex = ComboSiafwOrig.Items.Count - 2;
+                }
+                else ComboSiafwOrig.SelectedIndex = -1;
+            }
+            else CaminhoSIAFWor = ComboSiafwOrig.SelectedItem.ToString();
+
+            var conexao = new ConexaoFirebird(CaminhoSIAFWor);
+            var tabelaGrupos = conexao.ExecutarSelect("SELECT GRU_USU, GRU_DUSU FROM DSIAF053");
+
+            ComboGrupoOrig.Items.Clear();
+
+            for(int i = 0; i < tabelaGrupos.Rows.Count; i++)
+            {
+                ComboGrupoOrig.Items.Add($"{tabelaGrupos.Rows[i][0]} - {tabelaGrupos.Rows[i][1]}");
+            }
+        }
+
+        private async void ComboSiafwDe_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ComboSiafwDest.SelectedItem.ToString() == "Abrir arquivo...")
+            {
+                CaminhoAlt = null;
+                await AbrirArquivo();
+                if (CaminhoAlt != null)
+                {
+                    ComboSiafwDest.Items.Insert(ComboSiafwDest.Items.Count - 1, CaminhoAlt);
+                    ComboSiafwDest.SelectedIndex = ComboSiafwDest.Items.Count - 2;
+                }
+                else ComboSiafwDest.SelectedIndex = -1;
+            }
+            else CaminhoSIAFWde = ComboSiafwDest.SelectedItem.ToString();
+
+            var conexao = new ConexaoFirebird(CaminhoSIAFWde);
+            var tabelaGrupos = conexao.ExecutarSelect("SELECT GRU_USU, GRU_DUSU FROM DSIAF053");
+
+            ComboGrupoDest.Items.Clear();
+
+            for (int i = 0; i < tabelaGrupos.Rows.Count; i++)
+            {
+                ComboGrupoDest.Items.Add($"{tabelaGrupos.Rows[i][0]} - {tabelaGrupos.Rows[i][1]}");
+            }
         }
 
         private void BotaoImportar_Click(object sender, RoutedEventArgs e)
         {
+            if (CaminhoSIAFWde == null || CaminhoSIAFWor == null)
+            {
+                MostraDialogoEscolhaSIAFW();
+                return;
+            }
+            if (ComboGrupoOrig.SelectedItem == null || ComboGrupoDest.SelectedItem == null)
+            {
+                MostraDialogoEscolhaGrupo();
+                return;
+            }
+
             List<string> abas = new();
 
             if ((bool)CBoxG1.IsChecked) abas.Add("G1");
@@ -68,7 +155,7 @@ namespace ImportaGxP
 
             string andAbas = GeraStringAndAbas(abas);
 
-            if(abas.Count == 0)
+            if (abas.Count == 0)
             {
                 MostraAlertaSemAbas();
                 return;
@@ -100,18 +187,12 @@ namespace ImportaGxP
                     QueryUpdate.Add(@$"UPDATE DSIAF051 SET PROG_ACE = '{tbGxpOri.Rows[i][2]}', PROG_INC = '{tbGxpOri.Rows[i][3]}',
 PROG_ALT = '{tbGxpOri.Rows[i][4]}', PROG_EXC = '{tbGxpOri.Rows[i][5]}', PROG_IMP = '{tbGxpOri.Rows[i][6]}' 
 WHERE PROG_DESC = '{tbGxpOri.Rows[i][1]}' AND GRU_USU = '{grupoDes}'; ");
-//                    Teste.Items.Add(tbGxpOri.Rows[i][1]);
-                }  
+                    //                    Teste.Items.Add(tbGxpOri.Rows[i][1]);
+                }
             }
 
- //           TesteComando.Text = QueryUpdate.First();
+            //           TesteComando.Text = QueryUpdate.First();
             MostraConfirmacaoAtualiza();
-        }
-
-        private async void MostraConfirmacaoAtualiza()
-        {
-            DialogoAtualizacao.XamlRoot = this.Content.XamlRoot;
-            await DialogoAtualizacao.ShowAsync();
         }
 
         string GeraStringAndAbas(List<string> abas)
@@ -120,7 +201,7 @@ WHERE PROG_DESC = '{tbGxpOri.Rows[i][1]}' AND GRU_USU = '{grupoDes}'; ");
 
             string retorno = $"AND (PROG_MOD = '{abas.First()}'";
 
-            foreach(var aba in abas.Skip(1))
+            foreach (var aba in abas.Skip(1))
             {
                 retorno += $" OR PROG_MOD = '{aba}'";
             }
@@ -128,36 +209,37 @@ WHERE PROG_DESC = '{tbGxpOri.Rows[i][1]}' AND GRU_USU = '{grupoDes}'; ");
             return retorno;
         }
 
-        private void ComboSiafwOr_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void MostraConfirmacaoAtualiza()
         {
-            CaminhoSIAFWor = ComboSiafwOrig.SelectedItem.ToString();
-
-            var conexao = new ConexaoFirebird(CaminhoSIAFWor);
-            var tabelaGrupos = conexao.ExecutarSelect("SELECT GRU_USU, GRU_DUSU FROM DSIAF053");
-
-            ComboGrupoOrig.Items.Clear();
-
-            for(int i = 0; i < tabelaGrupos.Rows.Count; i++)
-            {
-                ComboGrupoOrig.Items.Add($"{tabelaGrupos.Rows[i][0]} - {tabelaGrupos.Rows[i][1]}");
-            }
+            DialogoAtualizacao.XamlRoot = this.Content.XamlRoot;
+            await DialogoAtualizacao.ShowAsync();
         }
 
-        private void ComboSiafwDe_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void MostraDialogoEscolhaSIAFW()
         {
-            CaminhoSIAFWde = ComboSiafwDest.SelectedItem.ToString();
-
-            var conexao = new ConexaoFirebird(CaminhoSIAFWde);
-            var tabelaGrupos = conexao.ExecutarSelect("SELECT GRU_USU, GRU_DUSU FROM DSIAF053");
-
-            ComboGrupoDest.Items.Clear();
-
-            for (int i = 0; i < tabelaGrupos.Rows.Count; i++)
+            ContentDialog Dialog = new ContentDialog()
             {
-                ComboGrupoDest.Items.Add($"{tabelaGrupos.Rows[i][0]} - {tabelaGrupos.Rows[i][1]}");
-            }
+                Title = "Atenção",
+                Content = "Escolha SIAFW de origem e destino!",
+                CloseButtonText = "Ok"
+            };
+
+            Dialog.XamlRoot = this.Content.XamlRoot;
+            await Dialog.ShowAsync();
         }
 
+        private async void MostraDialogoEscolhaGrupo()
+        {
+            ContentDialog Dialog = new ContentDialog()
+            {
+                Title = "Atenção",
+                Content = "Escolha grupo de origem e destino!",
+                CloseButtonText = "Ok"
+            };
+
+            Dialog.XamlRoot = this.Content.XamlRoot;
+            await Dialog.ShowAsync();
+        }
         private async void MostraAlertaSemAbas()
         {
             ContentDialog Dialog = new ContentDialog()
@@ -228,7 +310,6 @@ WHERE PROG_DESC = '{tbGxpOri.Rows[i][1]}' AND GRU_USU = '{grupoDes}'; ");
                 if (c < '0' || c > '9')
                     return false;
             }
-
             return true;
         }
     }

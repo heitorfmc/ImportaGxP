@@ -10,7 +10,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid>
+    <Grid Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="3*"/>
             <RowDefinition Height="*"/>
@@ -32,7 +32,7 @@
                         <StackPanel HorizontalAlignment="Center">
                             <TextBlock Style="{ThemeResource BaseTextBlockStyle}" Text="ImportaGxP" HorizontalAlignment="Center" Margin="0,0,0,12"/>
                             <TextBlock Text="Desenvolvido por Heitor Costa" Margin="0,0,0,12" />
-                            <TextBlock Text="heitor.francisco@adsoft.com.br"/>
+                            <TextBlock Text="heitorf.costa@outlook.com"/>
                         </StackPanel>
                     </Flyout>
                 </Button.Flyout>
@@ -53,15 +53,15 @@
         </StackPanel>
 
         <StackPanel x:Name="StackOrigem" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-            <ComboBox x:Name="ComboSiafwOrig" PlaceholderText="Escolha um arquivo" Header="Arquivo Siafw de origem" Width="200" SelectionChanged="ComboSiafwOr_SelectionChanged"/>
-            <ComboBox x:Name="ComboGrupoOrig" PlaceholderText="Escolha um grupo" Header="Grupo de origem" Width="200"/>
+            <ComboBox x:Name="ComboSiafwOrig" PlaceholderText="Escolha um arquivo" Header="Arquivo Siafw de origem" Width="225" SelectionChanged="ComboSiafwOr_SelectionChanged"/>
+            <ComboBox x:Name="ComboGrupoOrig" PlaceholderText="Escolha um grupo" Header="Grupo de origem" Width="225"/>
         </StackPanel>
 
         <StackPanel x:Name="StackDestino" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="5" Grid.Column="1">
-            <ComboBox x:Name="ComboSiafwDest" PlaceholderText="Escolha um arquivo" Header="Arquivo SIAFW de destino" Width="200" SelectionChanged="ComboSiafwDe_SelectionChanged"/>
-            <ComboBox x:Name="ComboGrupoDest" PlaceholderText="Escolha um grupo" Header="Grupo de destino" Width="200"/>
+            <ComboBox x:Name="ComboSiafwDest" PlaceholderText="Escolha um arquivo" Header="Arquivo SIAFW de destino" Width="225" SelectionChanged="ComboSiafwDe_SelectionChanged"/>
+            <ComboBox x:Name="ComboGrupoDest" PlaceholderText="Escolha um grupo" Header="Grupo de destino" Width="225"/>
         </StackPanel>
-        
+
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="3" Grid.Row="1" Grid.ColumnSpan="2">
             <CheckBox x:Name="CBoxG1" IsChecked="True">Geral 1</CheckBox>
             <CheckBox x:Name="CBoxG2" IsChecked="True">Geral 2</CheckBox>
@@ -72,7 +72,7 @@
             <CheckBox x:Name="CBoxGmt" IsChecked="True">Gourmet</CheckBox>
             <CheckBox x:Name="CBoxPdv" IsChecked="True">PDV</CheckBox>
         </StackPanel>
-        
+
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10" Grid.Row="2" Grid.ColumnSpan="2">
             <Button x:Name="BotaoImportar" Click="BotaoImportar_Click">Importar</Button>
         </StackPanel>
